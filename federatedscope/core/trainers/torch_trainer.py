@@ -98,8 +98,7 @@ class GeneralTorchTrainer(Trainer):
         return self.ctx.eval_metrics
 
     def register_default_hooks_train(self):
-        self.register_hook_in_train(
-            self._hook_on_fit_start_numerical_precision, "on_fit_start")
+        self.register_hook_in_train(self._hook_on_fit_start_numerical_precision, "on_fit_start")
         self.register_hook_in_train(self._hook_on_data_parallel_init,
                                     "on_fit_start")
         self.register_hook_in_train(self._hook_on_fit_start_init,

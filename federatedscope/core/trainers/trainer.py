@@ -244,7 +244,11 @@ class Trainer(BaseTrainer):
         hooks_set = hooks_set or self.hooks_in_eval
 
         if self.ctx.check_split(target_data_split_name, skip=True):
-            self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
+            if target_data_split_name in [MODE.TEST, MODE.VAL]:
+                self._run_routine(target_data_split_name, hooks_set,
+                                  target_data_split_name)
+            else:
+                self._run_routine(MODE.TEST, hooks_set, target_data_split_name)
         else:
             self.ctx.eval_metrics = dict()
 
@@ -390,11 +394,11 @@ class Trainer(BaseTrainer):
 
         trainable_filter = lambda p: True if \
             self.cfg.personalization.share_non_trainable_para else \
-            lambda p: p in self.ctx.trainable_para_names
+            p in self.ctx.trainable_para_names
         keyword_filter = filter_by_specified_keywords
         return dict(
             filter(
-                lambda elem: trainable_filter(elem[1]) and keyword_filter(
+                lambda elem: trainable_filter(elem[0]) and keyword_filter(
                     elem[0], filter_keywords), state_dict.items()))
 
     def save_model(self, path, cur_round=-1):
