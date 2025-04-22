@@ -14,6 +14,7 @@ def extend_llm_cfg(cfg):
     cfg.llm = CN()
     cfg.llm.tok_len = 128
     cfg.llm.retry_on_nan_loss = False
+    cfg.llm.llm_path = ''
 
     # ---------------------------------------------------------------------- #
     # Cache for LLM

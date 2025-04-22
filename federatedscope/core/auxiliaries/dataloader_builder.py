@@ -89,7 +89,7 @@ def get_dataloader(dataset, config, split='train'):
             LLMDataCollator
         model_name, model_hub = config.model.type.split('@')
         tokenizer, _ = get_tokenizer(model_name, config.data.root,
-                                     config.llm.tok_len, model_hub)
+                                     config.llm.tok_len, model_hub, config.llm.llm_path)
         data_collator = LLMDataCollator(tokenizer=tokenizer)
         filtered_args['collate_fn'] = data_collator
 

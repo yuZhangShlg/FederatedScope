@@ -62,7 +62,7 @@ class LLMDataCollator(object):
         )
 
 
-def get_tokenizer(model_name, cache_dir, tok_len=128, pkg='huggingface_llm'):
+def get_tokenizer(model_name, cache_dir, tok_len=128, pkg='huggingface_llm', llm_path=None):
     """
     This function loads a tokenizer from a pretrained model name and adds some
     default special tokens if they are not already defined. It also sets the
@@ -72,6 +72,8 @@ def get_tokenizer(model_name, cache_dir, tok_len=128, pkg='huggingface_llm'):
         model_name: A string, the name of the pretrained model.
         cache_dir: A string, the path to the cache directory.
         tok_len: An integer, the maximum length of the tokens. Defaults to 128.
+        pkg: A string, the name of the model download type, Defaults to huggingface_llm.
+        llm_path: A string, the name of downloaded model path
 
     Returns:
         A tuple of (tokenizer, num_new_tokens), where:
@@ -86,13 +88,22 @@ def get_tokenizer(model_name, cache_dir, tok_len=128, pkg='huggingface_llm'):
     elif pkg == 'modelscope_llm':
         from modelscope import AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name,
-        cache_dir=cache_dir,
-        model_max_length=tok_len,
-        padding_side="right",
-        use_fast=False,
-    )
+    if llm_path is not None:
+        tokenizer = AutoTokenizer.from_pretrained(
+            pretrained_model_name_or_path=llm_path,
+            model_max_length=tok_len,
+            padding_side="right",
+            use_fast=False,
+            local_files_only=True,
+        )
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(
+            pretrained_model_name_or_path=model_name,
+            cache_dir=cache_dir,
+            model_max_length=tok_len,
+            padding_side="right",
+            use_fast=False,
+        )
 
     special_tokens = dict()
     if tokenizer.pad_token is None:
@@ -223,7 +234,7 @@ def load_llm_dataset(config=None, **kwargs):
     model_name, model_hub = config.model.type.split('@')
     tokenizer, num_new_tokens = \
         get_tokenizer(model_name, config.data.root, config.llm.tok_len,
-                      model_hub)
+                      model_hub, config.llm.llm_path)
 
     dataset_name, _ = config.data.type.split('@')
 
@@ -237,11 +248,12 @@ def load_llm_dataset(config=None, **kwargs):
         dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'alpaca':
         fp = os.path.join(config.data.root, 'alpaca_data.json')
-        download_url(
-            'https://raw.githubusercontent.com/tatsu-lab'
-            '/stanford_alpaca/'
-            '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
-            'alpaca_data.json', config.data.root)
+        if not os.path.exists(fp):
+            download_url(
+                'https://raw.githubusercontent.com/tatsu-lab'
+                '/stanford_alpaca/'
+                '761dc5bfbdeeffa89b8bff5d038781a4055f796a/'
+                'alpaca_data.json', config.data.root)
         list_data_dict = load_json(fp)
         dataset = LLMDataset(list_data_dict, tokenizer)
     elif dataset_name.lower() == 'alpaca_cleaned':

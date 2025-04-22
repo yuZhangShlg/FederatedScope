@@ -10,14 +10,19 @@ federate:
   share_local_model: False
   online_aggr: False
 data:
-  root: data/
+  root: /bigdata/zy/llm/data/
   type: 'alpaca@llm'
   splits: [0.98,0.01,0.01]
   splitter: 'iid'
 llm:
+  llm_path: /bigdata/zy/llm/model/gpt2
   tok_len: 1000
   chat:
     max_len: 1000
+  adapter:
+    use: True
+    # Args for PEFT fine-tuning
+    args: [{'adapter_package':'peft', 'adapter_method':'lora', 'r':8, 'lora_alpha':32, 'lora_dropout':0.1}]
 dataloader:
   batch_size: 1
 model:

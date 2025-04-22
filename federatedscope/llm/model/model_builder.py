@@ -1,4 +1,10 @@
+
+import logging
+
 from federatedscope.llm.model.adapter_builder import AdapterModel
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def get_model_from_huggingface(model_name, config):
@@ -19,7 +25,10 @@ def get_model_from_huggingface(model_name, config):
     if len(config.llm.cache.model):
         kwargs['cache_dir'] = config.llm.cache.model
 
-    return AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+    if config.llm.llm_path is not None:
+        return AutoModelForCausalLM.from_pretrained(config.llm.llm_path, **kwargs)
+    else:
+        return AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
 
 
 def get_model_from_modelscope(model_name, config):
@@ -60,18 +69,15 @@ def get_llm(config):
     model_config = config.model
     model_name, model_hub = model_config.type.split('@')
     if model_hub == 'huggingface_llm':
-        model = get_model_from_huggingface(model_name=model_name,
-                                           config=config)
+        model = get_model_from_huggingface(model_name=model_name, config=config)
     elif model_hub == 'modelscope_llm':
         model = get_model_from_modelscope(model_name=model_name, config=config)
     else:
-        raise NotImplementedError(f'Not support LLM {model_name} in'
-                                  f' {model_hub}.')
+        raise NotImplementedError(f'Not support LLM {model_name} in {model_hub}.')
 
     # Resize LLM model based on settings
     tokenizer, num_new_tokens = \
-        get_tokenizer(model_name, config.data.root, config.llm.tok_len,
-                      model_hub)
+        get_tokenizer(model_name, config.llm.llm_path, config.llm.tok_len, model_hub, config.llm.llm_path)
     model.resize_token_embeddings(len(tokenizer))
     if num_new_tokens > 0:
         input_embeddings = model.get_input_embeddings().weight.data
