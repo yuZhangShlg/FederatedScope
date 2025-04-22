@@ -4,7 +4,7 @@ import copy
 import torch
 import torch.nn as nn
 from transformers import AdamW, get_linear_schedule_with_warmup
-from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
+from torch.nn import CrossEntropyLoss
 
 INPUT_GRADIENT = []
 
